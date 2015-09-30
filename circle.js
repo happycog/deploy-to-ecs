@@ -54,7 +54,11 @@ fs.readFile('Dockerrun.aws.json', 'utf8', function (err, data) {
     var ips = getContainerInstanceIps(instanceArns);
 
     console.log('Creating mapping...');
-    console.log(bindings, ips);
+    var proxies = {};
+    container.hosts.forEach(function(host) {
+      proxies[host] = 'http://'+ips[0].ip+':'+bindings[0].hostPort;
+    });
+    updateProxy(proxies);
   });
 });
 
@@ -66,7 +70,7 @@ function defaultConfig()
       "build": ".",
       "desiredCount": 1,
       "hosts": [
-        "${repoName}.${branchName}.cogclient.com"
+        "upstream.com.cogclient.${branchName}.${repoName}"
       ],
       "containerDefinition": {
         "name":"web",
@@ -188,4 +192,11 @@ function getContainerInstanceIps(containerInstanceArns)
       "ip": ec2InstanceResponse.Reservations[0].Instances[0].PublicIpAddress
     };
   });
+}
+
+function updateProxy(body)
+{
+  body = JSON.stringify(body).replace(/[\\']/g, '\\$&').replace(/\u0000/g, '\\0');
+  var cmd = 'curl -s -H "Content-Type: application/json" -X POST -d \''+body+'\' http://52.89.116.88:26542';
+  return JSON.parse(execSync(cmd).toString());
 }
