@@ -25,6 +25,15 @@ fs.readFile('Dockerrun.aws.json', 'utf8', function (err, data) {
   }
 
   json.forEach(function(container) {
+    console.log('Building '+container.name+'...');
+    buildImage(container);
+
+    console.log('Tagging '+container.name+'...');
+    tagImage(container);
+
+    console.log('Pushing '+container.name+'...');
+    pushImage(container);
+
     registerTask(container);
 
     console.log('Checking for exising service...');
@@ -55,7 +64,7 @@ fs.readFile('Dockerrun.aws.json', 'utf8', function (err, data) {
 
     console.log('Creating mapping...');
     var proxies = {};
-    container.hosts.forEach(function(host) {
+    (container.hosts || []).forEach(function(host) {
       proxies[host] = 'http://'+ips[0].ip+':'+bindings[0].hostPort;
     });
     console.log('Proxies set, ', updateProxy(proxies));
@@ -90,6 +99,24 @@ function defaultConfig()
   ];
 
   return JSON.stringify(conf);
+}
+
+function buildImage(container)
+{
+  var cmd = 'docker build -t '+container.name+' '+container.build;
+  execSync(cmd);
+}
+
+function tagImage(container)
+{
+  var cmd = 'docker tag '+container.name+' 52.89.116.88:32768/happycog/'+container.name;
+  execSync(cmd);
+}
+
+function pushImage(container)
+{
+  var cmd = 'docker push 52.89.116.88:32768/happycog/'+container.name;
+  execSync(cmd);
 }
 
 function registerTask(json)
