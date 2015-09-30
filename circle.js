@@ -1,16 +1,20 @@
 var fs = require('fs');
 var execSync = require('child_process').execSync;
 
+var repoName = process.argv[2];
+var branchName = process.argv[3];
+if (!repoName || !branchName) {
+  throw new Error('Repo ('+repoName+') or branch ('+branchName+') not valid.');
+}
+
 fs.readFile('Dockerrun.aws.json', 'utf8', function (err, data) {
   if (err) {
     console.log("Data file not found, using defaults.");
-    var repoName = process.argv[2];
-    var branchName = process.argv[3];
-    if (!repoName || !branchName) {
-      throw new Error('Repo ('+repoName+') or branch ('+branchName+') not valid.');
-    }
-    data = defaultConfig(repoName, branchName);
+    data = defaultConfig();
   }
+
+  data = data.replace(/\${repoName}/g, repoName);
+  data = data.replace(/\${branchName}/g, branchName);
 
   var json;
   try {
@@ -54,19 +58,19 @@ fs.readFile('Dockerrun.aws.json', 'utf8', function (err, data) {
   });
 });
 
-function defaultConfig(repoName, branchName)
+function defaultConfig()
 {
   var conf = [
     {
-      "name": repoName+"-"+branchName+"-web",
+      "name": '${repoName}-${branchName}-web',
       "build": ".",
       "desiredCount": 1,
       "hosts": [
-        repoName+"-"+branchName+".cogclient.com"
+        "${repoName}.${branchName}.cogclient.com"
       ],
       "containerDefinition": {
         "name":"web",
-        "image":"52.89.116.88:32768/happycog/"+repoName+"-"+branchName+"-web",
+        "image":'52.89.116.88:32768/happycog/${repoName}-${branchName}-web',
         "cpu":1,
         "memory":4,
         "essential":true,
@@ -80,10 +84,6 @@ function defaultConfig(repoName, branchName)
       }
     }
   ];
-
-  if (branchName == 'master') {
-    conf[0].hosts.push(repoName+".cogclient.com");
-  }
 
   return JSON.stringify(conf);
 }
