@@ -25,14 +25,16 @@ fs.readFile('Dockerrun.aws.json', 'utf8', function (err, data) {
   }
 
   json.forEach(function(container) {
-    console.log('Building '+container.name+'...');
-    buildImage(container);
+    if (container.build) {
+      console.log('Building '+container.name+'...');
+      buildImage(container);
 
-    console.log('Tagging '+container.name+'...');
-    tagImage(container);
+      console.log('Tagging '+container.name+'...');
+      tagImage(container);
 
-    console.log('Pushing '+container.name+'...');
-    pushImage(container);
+      console.log('Pushing '+container.name+'...');
+      pushImage(container);
+    }
 
     registerTask(container);
 
