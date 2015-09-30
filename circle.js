@@ -70,7 +70,7 @@ function defaultConfig()
       "build": ".",
       "desiredCount": 1,
       "hosts": [
-        "upstream.com.cogclient.${branchName}.${repoName}"
+        "upstream.com.cogclient.${branchName}.${repoName}:80"
       ],
       "containerDefinition": {
         "name":"web",
