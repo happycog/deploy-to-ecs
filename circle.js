@@ -58,7 +58,7 @@ fs.readFile('Dockerrun.aws.json', 'utf8', function (err, data) {
     container.hosts.forEach(function(host) {
       proxies[host] = 'http://'+ips[0].ip+':'+bindings[0].hostPort;
     });
-    updateProxy(proxies);
+    console.log('Proxies set, ', updateProxy(proxies));
   });
 });
 
