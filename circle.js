@@ -36,7 +36,9 @@ fs.readFile('Dockerrun.aws.json', 'utf8', function (err, data) {
       pushImage(container);
     }
 
-    registerTask(container);
+    console.log('Updating task definition...');
+    var taskDefinition = registerTask(container);
+    console.log('  > Task definition: ', taskDefinition);
 
     console.log('Checking for exising service...');
     if (checkForService(container.name)) {
@@ -87,7 +89,7 @@ function defaultConfig()
         "name":"web",
         "image":'52.89.116.88:32768/happycog/${repoName}-${branchName}-web',
         "cpu":1,
-        "memory":4,
+        "memory":32,
         "essential":true,
         "portMappings":[
           {
@@ -128,7 +130,7 @@ function registerTask(json)
     "containerDefinitions": [json.containerDefinition]
   }).replace(/[\\"']/g, '\\$&').replace(/\u0000/g, '\\0');
   var cmd = 'aws ecs register-task-definition --region us-west-2 --cli-input-json "'+cliInputJson+'"';
-  execSync(cmd);
+  return JSON.parse(execSync(cmd).toString());
 }
 
 function checkForService(serviceName)
