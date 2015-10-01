@@ -166,7 +166,7 @@ function createService(name, count)
     "desiredCount": count
   }).replace(/[\\"']/g, '\\$&').replace(/\u0000/g, '\\0');
   var cmd = 'aws ecs create-service --region us-west-2 --cli-input-json "'+cliInputJson+'"';
-  console.log(execSync(cmd));
+  return JSON.parse(execSync(cmd).toString());
 }
 
 function updateService(name, count)
