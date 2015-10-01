@@ -7,72 +7,79 @@ if (!repoName || !branchName) {
   throw new Error('Repo ('+repoName+') or branch ('+branchName+') not valid.');
 }
 
-fs.readFile('Dockerrun.aws.json', 'utf8', function (err, data) {
-  if (err) {
-    console.log("Data file not found, using defaults.");
-    data = defaultConfig();
+var dockerRun = fs.readFileSync('Dockerrun.aws.json', 'utf8');
+var dockerCompose = fs.readFileSync('docker-compose.yml', 'utf8');
+
+if (dockerRun) {
+  data = dockerRun;
+}
+else if (false && dockerCompose) {
+  throw new Error('Docker-compose not implemented, bailing out...');
+}
+else {
+  console.log("Data file not found, using defaults.");
+  data = defaultConfig();
+}
+
+data = data.replace(/\${repoName}/g, repoName);
+data = data.replace(/\${branchName}/g, branchName);
+
+var json;
+try {
+  json = JSON.parse(data);
+}
+catch (e) {
+  throw new Error('Unable to parse json data: '+data);
+}
+
+json.forEach(function(container) {
+  if (container.build) {
+    console.log('Building '+container.name+'...');
+    buildImage(container);
+
+    console.log('Tagging '+container.name+'...');
+    tagImage(container);
+
+    console.log('Pushing '+container.name+'...');
+    pushImage(container);
   }
 
-  data = data.replace(/\${repoName}/g, repoName);
-  data = data.replace(/\${branchName}/g, branchName);
+  console.log('Updating task definition...');
+  var taskDefinition = registerTask(container);
+  console.log('  > Task definition updated to ', taskDefinition.taskDefinition.revision);
 
-  var json;
-  try {
-    json = JSON.parse(data);
+  console.log('Checking for exising service...');
+  if (checkForService(container.name)) {
+    console.log('Service found, updating existing service...');
+    updateService(container.name, container.desiredCount);
+    console.log('  > Update complete.');
   }
-  catch (e) {
-    throw new Error('Unable to parse json data: '+data);
+  else {
+    console.log('Service not found, creating new service...');
+    createService(container.name, container.desiredCount);
+    console.log('  > Creation complete.');
   }
 
-  json.forEach(function(container) {
-    if (container.build) {
-      console.log('Building '+container.name+'...');
-      buildImage(container);
+  console.log('Waiting for service to become active...');
+  waitForService(container.name);
+  console.log('Service is now active, querying IP...');
 
-      console.log('Tagging '+container.name+'...');
-      tagImage(container);
+  console.log('  > Finding tasks...');
+  var serviceTaskArns = getServiceTaskArns(container.name);
 
-      console.log('Pushing '+container.name+'...');
-      pushImage(container);
-    }
+  console.log('  > Checking port bindings...');
+  var bindings = getTaskContainerBindings(serviceTaskArns);
 
-    console.log('Updating task definition...');
-    var taskDefinition = registerTask(container);
-    console.log('  > Task definition updated to ', taskDefinition.taskDefinition.revision);
+  console.log('  > Fetching public IP...');
+  var instanceArns = bindings.map(function(binding) { return binding.containerInstanceArn; });
+  var ips = getContainerInstanceIps(instanceArns);
 
-    console.log('Checking for exising service...');
-    if (checkForService(container.name)) {
-      console.log('Service found, updating existing service...');
-      updateService(container.name, container.desiredCount);
-      console.log('  > Update complete.');
-    }
-    else {
-      console.log('Service not found, creating new service...');
-      createService(container.name, container.desiredCount);
-      console.log('  > Creation complete.');
-    }
-
-    console.log('Waiting for service to become active...');
-    waitForService(container.name);
-    console.log('Service is now active, querying IP...');
-
-    console.log('  > Finding tasks...');
-    var serviceTaskArns = getServiceTaskArns(container.name);
-
-    console.log('  > Checking port bindings...');
-    var bindings = getTaskContainerBindings(serviceTaskArns);
-
-    console.log('  > Fetching public IP...');
-    var instanceArns = bindings.map(function(binding) { return binding.containerInstanceArn; });
-    var ips = getContainerInstanceIps(instanceArns);
-
-    console.log('Updating proxy...');
-    var proxies = {};
-    (container.hosts || []).forEach(function(host) {
-      proxies[host] = 'http://'+ips[0].ip+':'+bindings[0].hostPort;
-    });
-    console.log('  > Updated, ', updateProxy(proxies));
+  console.log('Updating proxy...');
+  var proxies = {};
+  (container.hosts || []).forEach(function(host) {
+    proxies[host] = 'http://'+ips[0].ip+':'+bindings[0].hostPort;
   });
+  console.log('  > Updated, ', updateProxy(proxies));
 });
 
 function defaultConfig()
