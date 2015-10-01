@@ -15,13 +15,13 @@ catch (e) {
 
 }
 
-try {
-  data = fs.readFileSync('docker-compose.yml', 'utf8');
-  throw new Error('not implemted');
-}
-catch (e) {
-  console.log('Docker-compose not implemented, bailing out...');
-}
+//try {
+//  data = fs.readFileSync('docker-compose.yml', 'utf8');
+//  console.log("Using docker-compose.yml");
+//}
+//catch (e) {
+//
+//}
 
 if (!data) {
   console.log("Data file not found, using defaults");
