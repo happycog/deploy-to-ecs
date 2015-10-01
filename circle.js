@@ -38,18 +38,18 @@ fs.readFile('Dockerrun.aws.json', 'utf8', function (err, data) {
 
     console.log('Updating task definition...');
     var taskDefinition = registerTask(container);
-    console.log('  > Task definition: ', taskDefinition);
+    console.log('  > Task definition updated to ', taskDefinition.taskDefinition.revision);
 
     console.log('Checking for exising service...');
     if (checkForService(container.name)) {
       console.log('Service found, updating existing service...');
       updateService(container.name, container.desiredCount);
-      console.log('Update complete.');
+      console.log('  > Update complete.');
     }
     else {
       console.log('Service not found, creating new service...');
       createService(container.name, container.desiredCount);
-      console.log('Creation complete.');
+      console.log('  > Creation complete.');
     }
 
     console.log('Waiting for service to become active...');
@@ -66,12 +66,12 @@ fs.readFile('Dockerrun.aws.json', 'utf8', function (err, data) {
     var instanceArns = bindings.map(function(binding) { return binding.containerInstanceArn; });
     var ips = getContainerInstanceIps(instanceArns);
 
-    console.log('Creating mapping...');
+    console.log('Updating proxy...');
     var proxies = {};
     (container.hosts || []).forEach(function(host) {
       proxies[host] = 'http://'+ips[0].ip+':'+bindings[0].hostPort;
     });
-    console.log('Proxies set, ', updateProxy(proxies));
+    console.log('  > Updated, ', updateProxy(proxies));
   });
 });
 
