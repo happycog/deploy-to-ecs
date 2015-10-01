@@ -11,13 +11,15 @@ var dockerRun = fs.readFileSync('Dockerrun.aws.json', 'utf8');
 var dockerCompose = fs.readFileSync('docker-compose.yml', 'utf8');
 
 if (dockerRun) {
+  console.log("Using Dockerrun.aws.json");
   data = dockerRun;
 }
 else if (false && dockerCompose) {
+  console.log("Using docker-compose.yml");
   throw new Error('Docker-compose not implemented, bailing out...');
 }
 else {
-  console.log("Data file not found, using defaults.");
+  console.log("Data file not found, using defaults");
   data = defaultConfig();
 }
 
