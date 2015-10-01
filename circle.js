@@ -69,26 +69,28 @@ json.forEach(function(container) {
     console.log('  > Creation complete.');
   }
 
-  console.log('Waiting for service to become active...');
-  waitForService(container.name);
-  console.log('Service is now active, querying IP...');
-
-  console.log('  > Finding tasks...');
-  var serviceTaskArns = getServiceTaskArns(container.name);
-
-  console.log('  > Checking port bindings...');
-  var bindings = getTaskContainerBindings(serviceTaskArns);
-
-  console.log('  > Fetching public IP...');
-  var instanceArns = bindings.map(function(binding) { return binding.containerInstanceArn; });
-  var ips = getContainerInstanceIps(instanceArns);
-
-  console.log('Updating proxy...');
-  var proxies = {};
-  (container.hosts || []).forEach(function(host) {
-    proxies[host] = 'http://'+ips[0].ip+':'+bindings[0].hostPort;
-  });
-  console.log('  > Updated, ', updateProxy(proxies));
+  if (container.hosts) {
+    console.log('Waiting for service to become active...');
+    waitForService(container.name);
+    console.log('Service is now active, querying IP...');
+  
+    console.log('  > Finding tasks...');
+    var serviceTaskArns = getServiceTaskArns(container.name);
+  
+    console.log('  > Checking port bindings...');
+    var bindings = getTaskContainerBindings(serviceTaskArns);
+  
+    console.log('  > Fetching public IP...');
+    var instanceArns = bindings.map(function(binding) { return binding.containerInstanceArn; });
+    var ips = getContainerInstanceIps(instanceArns);
+  
+    console.log('Updating proxy...');
+    var proxies = {};
+    container.hosts.forEach(function(host) {
+      proxies[host] = 'http://'+ips[0].ip+':'+bindings[0].hostPort;
+    });
+    console.log('  > Updated, ', updateProxy(proxies));
+  }
 });
 
 function defaultConfig()
