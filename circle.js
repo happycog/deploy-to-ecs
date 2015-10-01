@@ -7,18 +7,23 @@ if (!repoName || !branchName) {
   throw new Error('Repo ('+repoName+') or branch ('+branchName+') not valid.');
 }
 
-var dockerRun = fs.readFileSync('Dockerrun.aws.json', 'utf8');
-var dockerCompose = fs.readFileSync('docker-compose.yml', 'utf8');
-
-if (dockerRun) {
+try {
+  data = fs.readFileSync('Dockerrun.aws.json', 'utf8');
   console.log("Using Dockerrun.aws.json");
-  data = dockerRun;
 }
-else if (false && dockerCompose) {
-  console.log("Using docker-compose.yml");
-  throw new Error('Docker-compose not implemented, bailing out...');
+catch (e) {
+
 }
-else {
+
+try {
+  data = fs.readFileSync('docker-compose.yml', 'utf8');
+  throw new Error('not implemted');
+}
+catch (e) {
+  console.log('Docker-compose not implemented, bailing out...');
+}
+
+if (!data) {
   console.log("Data file not found, using defaults");
   data = defaultConfig();
 }
