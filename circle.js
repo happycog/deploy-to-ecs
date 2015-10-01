@@ -103,7 +103,7 @@ function defaultConfig()
       "hosts": [
         "upstream.com.cogclient.${branchName}.${repoName}:80"
       ],
-      "containerDefinition": {
+      "containerDefinitions": [{
         "name":"web",
         "image":'52.89.116.88:32768/happycog/${repoName}-${branchName}-web',
         "cpu":1,
@@ -116,7 +116,7 @@ function defaultConfig()
             "protocol":"tcp"
           }
         ]
-      }
+      }]
     }
   ];
 
@@ -145,7 +145,7 @@ function registerTask(json)
 {
   var cliInputJson = JSON.stringify({
     "family": json.name,
-    "containerDefinitions": [json.containerDefinition]
+    "containerDefinitions": json.containerDefinitions
   }).replace(/[\\"']/g, '\\$&').replace(/\u0000/g, '\\0');
   var cmd = 'aws ecs register-task-definition --region us-west-2 --cli-input-json "'+cliInputJson+'"';
   return JSON.parse(execSync(cmd).toString());
