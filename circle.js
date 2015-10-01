@@ -7,7 +7,7 @@ if (!repoName || !branchName) {
   throw new Error('Repo ('+repoName+') or branch ('+branchName+') not valid.');
 }
 
-car data;
+var data;
 
 try {
   data = fs.readFileSync('Dockerrun.aws.json', 'utf8');
