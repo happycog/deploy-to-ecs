@@ -93,14 +93,14 @@ else {
 
 function defaultConfig()
 {
-  var conf = '
-web:
-  build: .
-  proxy:
-    - ${repoName}.${branchName}.cogclient.com:80
-  ports:
-    - "80"
-';
+  var conf = ''+
+'web:'+
+'  build: .'+
+'  proxy:'+
+'    - ${repoName}.${branchName}.cogclient.com:80'+
+'  ports:'+
+'    - "80"'+
+'';
 
   return conf;
 }
@@ -137,7 +137,7 @@ function createStack(stackName, stack)
     services: []
   };
 
-  stack.forEach(function(container) {
+  stack.forEach(function(container, containerName) {
     if (container.build) {
       delete container.build;
       container.image = '52.89.116.88:32768/happycog/'+containerName;
@@ -146,6 +146,8 @@ function createStack(stackName, stack)
     if (container.proxy) {
       delete container.proxy;
     }
+
+    container.name = containerName;
 
     def.services.push(container);
   });
