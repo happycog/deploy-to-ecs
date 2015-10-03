@@ -8,6 +8,7 @@ if (!repoName || !branchName) {
   throw new Error('Repo ('+repoName+') or branch ('+branchName+') not valid.');
 }
 
+var stackName = repoName+'-'+branchName;
 var data;
 
 try {
@@ -53,18 +54,19 @@ json.forEach(function(container, containerName) {
     console.log('Pushing '+containerName+'...');
     pushImage(containerName);
   }
+});
 
-  console.log('Checking for exising service...');
-  if (checkForService(containerName)) {
-    console.log('Service found, updating existing service...');
-    updateService(container, containerName);
-    console.log('  > Update complete.');
-  }
-  else {
-    console.log('Service not found, creating new service...');
-    createService(container, containerName);
-    console.log('  > Creation complete.');
-  }
+console.log('Checking for exising stack...');
+if (checkForStack(stackName)) {
+  console.log('Stack found, updating existing stack...');
+  updateStack(stackName, json);
+  console.log('  > Update complete.');
+}
+else {
+  console.log('Stack not found, creating new stack...');
+  createStack(stackName, json);
+  console.log('  > Creation complete.');
+}
 
   if (container.hosts) {
     console.log('Waiting for service to become active...');
@@ -87,8 +89,7 @@ json.forEach(function(container, containerName) {
       proxies[host] = 'http://'+ips[0].ip+':'+bindings[0].hostPort;
     });
     console.log('  > Updated, ', updateProxy(proxies));
-  }
-});
+}
 
 function defaultConfig()
 {
@@ -122,14 +123,14 @@ function pushImage(container)
   execSync(cmd);
 }
 
-function checkForService(serviceName)
+function checkForStack(serviceName)
 {
   var cmd = 'aws ecs describe-services --region us-west-2 --service '+serviceName;
   var response = JSON.parse(execSync(cmd).toString());
   return response.services.length > 0 && response.services[0].status == 'ACTIVE';
 }
 
-function createService(name, container)
+function createStack(name, container)
 {
   if (container.build) {
     delete container.build;
