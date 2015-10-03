@@ -95,6 +95,8 @@ function defaultConfig()
   var conf = '
 web:
   build: .
+  proxy:
+    - ${repoName}.${branchName}.cogclient.com:80
   ports:
     - "80"
 ';
@@ -120,16 +122,6 @@ function pushImage(container)
   execSync(cmd);
 }
 
-function registerTask(json)
-{
-  var cliInputJson = JSON.stringify({
-    "family": json.name,
-    "containerDefinitions": json.containerDefinitions
-  }).replace(/[\\"']/g, '\\$&').replace(/\u0000/g, '\\0');
-  var cmd = 'aws ecs register-task-definition --region us-west-2 --cli-input-json "'+cliInputJson+'"';
-  return JSON.parse(execSync(cmd).toString());
-}
-
 function checkForService(serviceName)
 {
   var cmd = 'aws ecs describe-services --region us-west-2 --service '+serviceName;
@@ -137,8 +129,17 @@ function checkForService(serviceName)
   return response.services.length > 0 && response.services[0].status == 'ACTIVE';
 }
 
-function createService(name, count)
+function createService(name, container)
 {
+  if (container.build) {
+    delete container.build;
+    container.image = '52.89.116.88:32768/happycog/'+containerName';
+  }
+
+  if (container.proxy) {
+    delete container.proxy;
+  }
+
   var cliInputJson = JSON.stringify({
     "serviceName": name,
     "taskDefinition": name,
