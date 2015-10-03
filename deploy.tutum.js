@@ -35,7 +35,7 @@ data = data.replace(/\${branchName}/g, branchName);
 
 var json;
 try {
-  json = JSON.parse(data);
+  json = yaml.safeLoad(data);
 }
 catch (e) {
   throw new Error('Unable to parse json data: '+data);
