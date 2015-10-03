@@ -130,16 +130,25 @@ function checkForStack(serviceName)
   return response.services.length > 0 && response.services[0].status == 'ACTIVE';
 }
 
-function createStack(name, container)
+function createStack(stackName, stack)
 {
-  if (container.build) {
-    delete container.build;
-    container.image = '52.89.116.88:32768/happycog/'+containerName';
-  }
+  var def = {
+    name: stackName,
+    services: []
+  };
 
-  if (container.proxy) {
-    delete container.proxy;
-  }
+  stack.forEach(function(container) {
+    if (container.build) {
+      delete container.build;
+      container.image = '52.89.116.88:32768/happycog/'+containerName;
+    }
+
+    if (container.proxy) {
+      delete container.proxy;
+    }
+
+    def.services.push(container);
+  });
 
   var cliInputJson = JSON.stringify({
     "serviceName": name,
