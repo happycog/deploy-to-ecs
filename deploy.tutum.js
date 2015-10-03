@@ -12,7 +12,7 @@ var data;
 
 try {
   data = fs.readFileSync('tutum.yml', 'utf8');
-  console.log("Using Dockerrun.aws.json");
+  console.log("Using tutum.yml");
 }
 catch (e) {
 
@@ -44,13 +44,13 @@ catch (e) {
 
 json.forEach(function(container, containerName) {
   if (container.build) {
-    console.log('Building '+container.name+'...');
+    console.log('Building '+containerName+'...');
     buildImage(containerName, container.build);
 
-    console.log('Tagging '+container.name+'...');
+    console.log('Tagging '+containerName+'...');
     tagImage(containerName);
 
-    console.log('Pushing '+container.name+'...');
+    console.log('Pushing '+containerName+'...');
     pushImage(containerName);
   }
 
