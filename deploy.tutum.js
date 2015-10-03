@@ -54,19 +54,15 @@ json.forEach(function(container, containerName) {
     pushImage(containerName);
   }
 
-  console.log('Updating task definition...');
-  var taskDefinition = registerTask(container);
-  console.log('  > Task definition updated to ', taskDefinition.taskDefinition.revision);
-
   console.log('Checking for exising service...');
-  if (checkForService(container.name)) {
+  if (checkForService(containerName)) {
     console.log('Service found, updating existing service...');
-    updateService(container.name, container.desiredCount);
+    updateService(container, containerName);
     console.log('  > Update complete.');
   }
   else {
     console.log('Service not found, creating new service...');
-    createService(container.name, container.desiredCount);
+    createService(container, containerName);
     console.log('  > Creation complete.');
   }
 
