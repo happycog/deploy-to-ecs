@@ -92,32 +92,14 @@ json.forEach(function(container, containerName) {
 
 function defaultConfig()
 {
-  var conf = [
-    {
-      "name": '${repoName}-${branchName}-web',
-      "build": ".",
-      "desiredCount": 1,
-      "hosts": [
-        "upstream.com.cogclient.${branchName}.${repoName}:80"
-      ],
-      "containerDefinitions": [{
-        "name":"web",
-        "image":'52.89.116.88:32768/happycog/${repoName}-${branchName}-web',
-        "cpu":1,
-        "memory":32,
-        "essential":true,
-        "portMappings":[
-          {
-            "containerPort":80,
-            "hostPort":0,
-            "protocol":"tcp"
-          }
-        ]
-      }]
-    }
-  ];
+  var conf = '
+web:
+  build: .
+  ports:
+    - "80"
+';
 
-  return JSON.stringify(conf);
+  return conf;
 }
 
 function buildImage(containerName, buildPath)
