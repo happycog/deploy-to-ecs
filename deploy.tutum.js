@@ -1,5 +1,6 @@
 var fs = require('fs');
 var execSync = require('child_process').execSync;
+yaml = require('js-yaml');
 
 var repoName = process.argv[2];
 var branchName = process.argv[3];
@@ -41,16 +42,16 @@ catch (e) {
   throw new Error('Unable to parse json data: '+data);
 }
 
-json.forEach(function(container) {
+json.forEach(function(container, containerName) {
   if (container.build) {
     console.log('Building '+container.name+'...');
-    buildImage(container);
+    buildImage(containerName, container.build);
 
     console.log('Tagging '+container.name+'...');
-    tagImage(container);
+    tagImage(containerName);
 
     console.log('Pushing '+container.name+'...');
-    pushImage(container);
+    pushImage(containerName);
   }
 
   console.log('Updating task definition...');
@@ -123,21 +124,21 @@ function defaultConfig()
   return JSON.stringify(conf);
 }
 
-function buildImage(container)
+function buildImage(containerName, buildPath)
 {
-  var cmd = 'docker build -t '+container.name+' '+container.build;
+  var cmd = 'docker build -t '+containerName+' '+buildPath;
   execSync(cmd);
 }
 
-function tagImage(container)
+function tagImage(containerName)
 {
-  var cmd = 'docker tag '+container.name+' 52.89.116.88:32768/happycog/'+container.name;
+  var cmd = 'docker tag '+containerName+' 52.89.116.88:32768/happycog/'+containerName;
   execSync(cmd);
 }
 
 function pushImage(container)
 {
-  var cmd = 'docker push 52.89.116.88:32768/happycog/'+container.name;
+  var cmd = 'docker push 52.89.116.88:32768/happycog/'+containerName;
   execSync(cmd);
 }
 
