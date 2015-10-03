@@ -10,7 +10,7 @@ if (!repoName || !branchName) {
 var data;
 
 try {
-  data = fs.readFileSync('Dockerrun.aws.json', 'utf8');
+  data = fs.readFileSync('tutum.yml', 'utf8');
   console.log("Using Dockerrun.aws.json");
 }
 catch (e) {
