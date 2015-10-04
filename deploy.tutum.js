@@ -47,8 +47,8 @@ catch (e) {
 Object.keys(json).forEach(function(containerName) {
   var container = json[containerName];
   if (container.build) {
-    console.log('Creating '+containerName+' registry...');
-    createRegistry(containerName);
+    console.log('Creating '+stackName+'-'+containerName+' registry...');
+    createRegistry(stackName+'-'+containerName);
 
     console.log('Building '+containerName+'...');
     buildImage(stackName+'-'+containerName, container.build);
@@ -138,10 +138,10 @@ function apiCmd(method, uri, body)
   return JSON.parse(res.body.toString());
 }
 
-function createRegistry(containerName)
+function createRegistry(registryName)
 {
-  apiCmd('GET', '/api/v1/image/', {
-    "name": "tutum.co/happycog/"+containerName
+  apiCmd('POST', '/api/v1/image/', {
+    "name": "tutum.co/happycog/"+registryName
   });
 }
 
