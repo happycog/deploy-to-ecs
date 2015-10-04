@@ -76,6 +76,7 @@ else {
 console.log('Waiting for redeploy...');
 var stack = waitForStack(uuid);
 
+var proxies = [];
 for (var i=0; i<stack.services.length; i++) {
   var servicePath = stack.services[i];
   var service = apiCmd('GET', servicePath);
@@ -84,7 +85,7 @@ for (var i=0; i<stack.services.length; i++) {
       var container = apiCmd('GET', service.containers[j]);
       var ports = container.container_ports;
       for (var k=0; k<ports.length; k++) {
-        console.log('lb: ', json[service.name].proxy[0], 'http://52.3.247.192:'+ports[k].outer_port);
+        proxies[json[service.name].proxy[0]] = ports[k].outer_port_uri;
       }
     }
   }
