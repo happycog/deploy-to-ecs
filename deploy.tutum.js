@@ -47,6 +47,9 @@ catch (e) {
 Object.keys(json).forEach(function(containerName) {
   var container = json[containerName];
   if (container.build) {
+    console.log('Creating '+containerName+' registry...');
+    createRegistry(containerName);
+
     console.log('Building '+containerName+'...');
     buildImage(stackName+'-'+containerName, container.build);
 
@@ -133,6 +136,13 @@ function apiCmd(method, uri, body)
   });
   var res = req.end();
   return JSON.parse(res.body.toString());
+}
+
+function createRegistry(containerName)
+{
+  apiCmd('GET', '/api/v1/image/', {
+    "name": "tutum.co/happycog/"+containerName
+  });
 }
 
 function buildImage(containerName, buildPath)
