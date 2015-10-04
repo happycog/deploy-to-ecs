@@ -85,13 +85,16 @@ for (var i=0; i<stack.services.length; i++) {
       var container = apiCmd('GET', service.containers[j]);
       var ports = container.container_ports;
       for (var k=0; k<ports.length; k++) {
-        proxies[json[service.name].proxy[0]] = ports[k].outer_port_uri;
+        for (var l=0; l< json[service.name].proxy.length; l++) {
+          var proxy = json[service.name].proxy[l].split('.');
+          proxy.reverse();
+          proxies['upstream.'+proxy.join('.')+':'+ports[k].inner_port] = ports[k].endpoint_uri;
+        }
       }
     }
   }
 }
-
-return;
+updateProxy(proxies);
 
 function defaultConfig()
 {
@@ -231,6 +234,6 @@ function waitForStack(uuid)
 function updateProxy(body)
 {
   body = JSON.stringify(body).replace(/[\\']/g, '\\$&').replace(/\u0000/g, '\\0');
-  var cmd = 'curl -s -H "Content-Type: application/json" -X POST -d \''+body+'\' http://52.89.116.88:26542';
+  var cmd = 'curl -s -H "Content-Type: application/json" -X POST -d \''+body+'\' http://web.cogclient-proxy.happycog.svc.tutum.io:26542/';
   return JSON.parse(execSync(cmd).toString());
 }
