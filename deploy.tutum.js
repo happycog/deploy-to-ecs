@@ -202,7 +202,6 @@ function createStack(stackName, stack)
 {
   var def = defineStack(stackName, stack);
   var res = apiCmd('POST', '/api/v1/stack/', def);
-  console.log(res);
   return res.uuid;
 }
 
