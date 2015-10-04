@@ -80,7 +80,13 @@ for (var i=0; i<stack.services.length; i++) {
   var servicePath = stack.services[i];
   var service = apiCmd('GET', servicePath);
   if (json[service.name] && json[service.name].proxy) {
-    console.log(service);
+    for (var j=0; j<service.containers.length; j++) {
+      var container = apiCmd('GET', service.containers[j]);
+      var ports = container.container_ports;
+      for (var k=0; k<ports.length; k++) {
+        console.log('lb: ', json[service.name].proxy[0], 'http://52.3.247.192:'+ports[k].outer_port);
+      }
+    }
   }
 }
 
