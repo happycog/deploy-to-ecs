@@ -76,7 +76,8 @@ else {
 console.log('Waiting for redeploy...');
 var stack = waitForStack(uuid);
 
-var proxies = [];
+console.log('Fetching container ports...');
+var proxies = {};
 for (var i=0; i<stack.services.length; i++) {
   var servicePath = stack.services[i];
   var service = apiCmd('GET', servicePath);
@@ -94,7 +95,13 @@ for (var i=0; i<stack.services.length; i++) {
     }
   }
 }
-updateProxy(proxies);
+
+console.log('Updating proxy...');
+Object.keys(proxies).forEach(function(key) {
+  console.log('  - '+key+' => '+proxies[key]);
+});
+var proxy = updateProxy(proxies);
+console.log('Done!');
 
 function defaultConfig()
 {
@@ -102,7 +109,7 @@ function defaultConfig()
 web:\n\
   build: \".\"\n\
   proxy:\n\
-    - ${repoName}.${branchName}.cogclient.com:80\n\
+    - ${repoName}.${branchName}.cogclient.com\n\
   ports:\n\
     - \"80\"\n\
 ";
@@ -131,19 +138,19 @@ function apiCmd(method, uri, body)
 function buildImage(containerName, buildPath)
 {
   var cmd = 'docker build -t '+containerName+' '+buildPath;
-  // execSync(cmd);
+  execSync(cmd);
 }
 
 function tagImage(containerName)
 {
   var cmd = 'docker tag '+containerName+' tutum.co/happycog/'+containerName;
-  // execSync(cmd);
+  execSync(cmd);
 }
 
 function pushImage(containerName)
 {
   var cmd = 'docker push tutum.co/happycog/'+containerName;
-  // execSync(cmd);
+  execSync(cmd);
 }
 
 function checkForStack(serviceName)
@@ -228,8 +235,6 @@ function waitForStack(uuid)
     }
   }
 }
-
-
 
 function updateProxy(body)
 {
