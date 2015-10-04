@@ -1,6 +1,7 @@
 var fs = require('fs');
 var execSync = require('child_process').execSync;
-yaml = require('js-yaml');
+var yaml = require('js-yaml');
+var httpSync = require('http-sync');
 
 var repoName = process.argv[2];
 var branchName = process.argv[3];
@@ -40,200 +41,185 @@ try {
   json = yaml.safeLoad(data);
 }
 catch (e) {
-  throw new Error('Unable to parse json data: '+data);
+  throw e;
 }
 
-json.forEach(function(container, containerName) {
+Object.keys(json).forEach(function(containerName) {
+  var container = json[containerName];
   if (container.build) {
     console.log('Building '+containerName+'...');
-    buildImage(containerName, container.build);
+    buildImage(stackName+'-'+containerName, container.build);
 
     console.log('Tagging '+containerName+'...');
-    tagImage(containerName);
+    tagImage(stackName+'-'+containerName);
 
     console.log('Pushing '+containerName+'...');
-    pushImage(containerName);
+    pushImage(stackName+'-'+containerName);
   }
 });
 
 console.log('Checking for exising stack...');
-if (checkForStack(stackName)) {
+var uuid = checkForStack(stackName);
+if (uuid) {
   console.log('Stack found, updating existing stack...');
-  updateStack(stackName, json);
+  updateStack(stackName, uuid, json);
+  redeployStack(uuid);
   console.log('  > Update complete.');
 }
 else {
   console.log('Stack not found, creating new stack...');
-  createStack(stackName, json);
+  uuid = createStack(stackName, json);
+  startStack(uuid);
   console.log('  > Creation complete.');
 }
 
-  if (container.hosts) {
-    console.log('Waiting for service to become active...');
-    waitForService(container.name);
-    console.log('Service is now active, querying IP...');
-  
-    console.log('  > Finding tasks...');
-    var serviceTaskArns = getServiceTaskArns(container.name);
-  
-    console.log('  > Checking port bindings...');
-    var bindings = getTaskContainerBindings(serviceTaskArns);
-  
-    console.log('  > Fetching public IP...');
-    var instanceArns = bindings.map(function(binding) { return binding.containerInstanceArn; });
-    var ips = getContainerInstanceIps(instanceArns);
-  
-    console.log('Updating proxy...');
-    var proxies = {};
-    container.hosts.forEach(function(host) {
-      proxies[host] = 'http://'+ips[0].ip+':'+bindings[0].hostPort;
-    });
-    console.log('  > Updated, ', updateProxy(proxies));
+console.log('Waiting for redeploy...');
+var stack = waitForStack(uuid);
+
+for (var i=0; i<stack.services.length; i++) {
+  var servicePath = stack.services[i];
+  var service = apiCmd('GET', servicePath);
+  if (json[service.name] && json[service.name].proxy) {
+    console.log(service);
+  }
 }
+
+return;
 
 function defaultConfig()
 {
-  var conf = ''+
-'web:'+
-'  build: .'+
-'  proxy:'+
-'    - ${repoName}.${branchName}.cogclient.com:80'+
-'  ports:'+
-'    - "80"'+
-'';
+  var conf = "\
+web:\n\
+  build: \".\"\n\
+  proxy:\n\
+    - ${repoName}.${branchName}.cogclient.com:80\n\
+  ports:\n\
+    - \"80\"\n\
+";
 
   return conf;
+}
+
+function apiCmd(method, uri, body)
+{
+  var req = httpSync.request({
+    "method": method,
+    "protocol": "https",
+    "host": "dashboard.tutum.co",
+    "path": uri,
+    "headers": {
+      "Authorization": "ApiKey happycog:eb031873a51f69d1da882f9e561968a2009447ed",
+      "User-Agent": "node-request",
+      "Content-Type": "application/json"
+    },
+    "body": JSON.stringify(body)
+  });
+  var res = req.end();
+  return JSON.parse(res.body.toString());
 }
 
 function buildImage(containerName, buildPath)
 {
   var cmd = 'docker build -t '+containerName+' '+buildPath;
-  execSync(cmd);
+  // execSync(cmd);
 }
 
 function tagImage(containerName)
 {
-  var cmd = 'docker tag '+containerName+' 52.89.116.88:32768/happycog/'+containerName;
-  execSync(cmd);
+  var cmd = 'docker tag '+containerName+' tutum.co/happycog/'+containerName;
+  // execSync(cmd);
 }
 
-function pushImage(container)
+function pushImage(containerName)
 {
-  var cmd = 'docker push 52.89.116.88:32768/happycog/'+containerName;
-  execSync(cmd);
+  var cmd = 'docker push tutum.co/happycog/'+containerName;
+  // execSync(cmd);
 }
 
 function checkForStack(serviceName)
 {
-  var cmd = 'aws ecs describe-services --region us-west-2 --service '+serviceName;
-  var response = JSON.parse(execSync(cmd).toString());
-  return response.services.length > 0 && response.services[0].status == 'ACTIVE';
+  var res = apiCmd('GET', '/api/v1/stack/?name='+serviceName);
+  for (var i=0; i<res.objects.length; i++) {
+    var stack = res.objects[i];
+    if (stack.state != 'Terminated') {
+      return stack.uuid;
+    }
+  }
+
+  return false;
 }
 
-function createStack(stackName, stack)
+function defineStack(stackName, stack)
 {
   var def = {
     name: stackName,
     services: []
   };
 
-  stack.forEach(function(container, containerName) {
-    if (container.build) {
-      delete container.build;
-      container.image = '52.89.116.88:32768/happycog/'+containerName;
-    }
-
-    if (container.proxy) {
-      delete container.proxy;
-    }
-
-    container.name = containerName;
-
-    def.services.push(container);
-  });
-
-  var cliInputJson = JSON.stringify({
-    "serviceName": name,
-    "taskDefinition": name,
-    "desiredCount": count
-  }).replace(/[\\"']/g, '\\$&').replace(/\u0000/g, '\\0');
-  var cmd = 'aws ecs create-service --region us-west-2 --cli-input-json "'+cliInputJson+'"';
-  return JSON.parse(execSync(cmd).toString());
-}
-
-function updateService(name, count)
-{
-  var cliInputJson = JSON.stringify({
-    "service": name,
-    "taskDefinition": name,
-    "desiredCount": count
-  }).replace(/[\\"']/g, '\\$&').replace(/\u0000/g, '\\0');
-  var cmd = 'aws ecs update-service --region us-west-2 --cli-input-json "'+cliInputJson+'"';
-  execSync(cmd);
-}
-
-function waitForService(name)
-{
-  var cliInputJson = JSON.stringify({
-    "services": [name]
-  }).replace(/[\\"']/g, '\\$&').replace(/\u0000/g, '\\0');
-  var cmd = 'aws ecs wait services-stable --region us-west-2 --cli-input-json "'+cliInputJson+'"';
-  execSync(cmd);
-}
-
-function getServiceTaskArns(name)
-{
-  var cliInputJson = JSON.stringify({
-    "serviceName": name
-  }).replace(/[\\"']/g, '\\$&').replace(/\u0000/g, '\\0');
-  var cmd = 'aws ecs list-tasks --region us-west-2 --cli-input-json "'+cliInputJson+'"';
-  var response = JSON.parse(execSync(cmd).toString());
-  return response.taskArns;
-}
-
-function getTaskContainerBindings(taskArns)
-{
-  var cliInputJson = JSON.stringify({
-    "tasks": taskArns
-  }).replace(/[\\"']/g, '\\$&').replace(/\u0000/g, '\\0');
-  var cmd = 'aws ecs describe-tasks --region us-west-2 --cli-input-json "'+cliInputJson+'"';
-  var response = JSON.parse(execSync(cmd).toString());
-
-  var bindings = [];
-  response.tasks.forEach(function(task) {
-    task.containers[0].networkBindings.forEach(function(binding) {
-      binding.containerInstanceArn = task.containerInstanceArn;
-      bindings.push(binding);
-    });
-  });
-
-  return bindings;
-}
-
-function getContainerInstanceIps(containerInstanceArns)
-{
-  var cliInputJson = JSON.stringify({
-    "containerInstances": containerInstanceArns
-  }).replace(/[\\"']/g, '\\$&').replace(/\u0000/g, '\\0');
-  var cmd = 'aws ecs describe-container-instances --region us-west-2 --cli-input-json "'+cliInputJson+'"';
-  var response = JSON.parse(execSync(cmd).toString());
-  var instanceIds = response.containerInstances.map(function(instance) {
-    return instance.ec2InstanceId;
-  });
-
-  cliInputJson = JSON.stringify({
-    "InstanceIds": instanceIds
-  }).replace(/[\\"']/g, '\\$&').replace(/\u0000/g, '\\0');
-  cmd = 'aws ec2 describe-instances --region us-west-2 --cli-input-json "'+cliInputJson+'"';
-  var ec2InstanceResponse = JSON.parse(execSync(cmd).toString());
-
-  return containerInstanceArns.map(function(arn, index) {
-    return {
-      "arn": arn,
-      "ip": ec2InstanceResponse.Reservations[0].Instances[0].PublicIpAddress
+  Object.keys(stack).forEach(function(containerName) {
+    var container = stack[containerName];
+    var service = {
+      "name": containerName
     };
+
+    Object.keys(container).forEach(function(containerKey) {
+      if (containerKey == 'build') {
+        service.image = 'tutum.co/happycog/'+containerName;
+        return;
+      }
+
+      if (containerKey == 'proxy') {
+        return;
+      }
+
+      service[containerKey] = container[containerKey];
+    });
+
+    def.services.push(service);
   });
+
+  return def;
 }
+
+function createStack(stackName, stack)
+{
+  var def = defineStack(stackName, stack);
+  var res = apiCmd('POST', '/api/v1/stack/', def);
+  console.log(res);
+  return res.uuid;
+}
+
+function startStack(uuid)
+{
+  var res = apiCmd('POST', '/api/v1/stack/'+uuid+'/start/');
+  return res;
+}
+
+function updateStack(stackName, uuid, stack)
+{
+  var def = defineStack(stackName, stack);
+  delete def.name;
+  var res = apiCmd('PATCH', '/api/v1/stack/'+uuid, def);
+  return res.uuid;
+}
+
+function redeployStack(uuid)
+{
+  var res = apiCmd('POST', '/api/v1/stack/'+uuid+'/redeploy/');
+  return res;
+}
+
+function waitForStack(uuid)
+{
+  while (true) {
+    var stack = apiCmd('GET', '/api/v1/stack/'+uuid+'/');
+    if (stack.state == 'Running') {
+      return stack;
+    }
+  }
+}
+
+
 
 function updateProxy(body)
 {

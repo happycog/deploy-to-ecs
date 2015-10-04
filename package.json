@@ -1,0 +1,6 @@
+{
+  "dependencies": {
+    "http-sync": "^0.1.2",
+    "js-yaml": "^3.4.2"
+  }
+}
