@@ -236,6 +236,7 @@ function updateStack(stackName, uuid, stack)
   var def = defineStack(stackName, stack);
   delete def.name;
   var res = apiCmd('PATCH', '/api/v1/stack/'+uuid, def);
+  console.log(res);
   return res.uuid;
 }
 
