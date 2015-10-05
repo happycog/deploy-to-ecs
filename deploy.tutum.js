@@ -214,6 +214,7 @@ function defineStack(stackName, stack)
     def.services.push(service);
   });
 
+  console.log(def);
   return def;
 }
 
