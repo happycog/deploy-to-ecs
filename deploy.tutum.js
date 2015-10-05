@@ -44,9 +44,15 @@ catch (e) {
   throw e;
 }
 
+var loggedIn = false;
 Object.keys(json).forEach(function(containerName) {
   var container = json[containerName];
   if (container.build) {
+    if (!loggedIn) {
+      console.log('Logging in...');
+      dockerLogIn();
+    }
+
     console.log('Creating '+stackName+'-'+containerName+' registry...');
     createRegistry(stackName+'-'+containerName);
 
@@ -55,9 +61,6 @@ Object.keys(json).forEach(function(containerName) {
 
     console.log('Tagging '+containerName+'...');
     tagImage(stackName+'-'+containerName);
-
-    console.log('Logging in...');
-    dockerLogIn();
 
     console.log('Pushing '+containerName+'...');
     pushImage(stackName+'-'+containerName);
