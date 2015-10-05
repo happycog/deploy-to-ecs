@@ -240,7 +240,7 @@ function updateStack(stackName, uuid, stack)
   var def = defineStack(stackName, stack);
   delete def.name;
   console.log(def.services);
-  var res = apiCmd('PATCH', '/api/v1/stack/'+uuid, def);
+  var res = apiCmd('PATCH', '/api/v1/stack/'+uuid+'/', def);
   return res.uuid;
 }
 
