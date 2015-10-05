@@ -138,7 +138,7 @@ function apiCmd(method, uri, body)
     "body": JSON.stringify(body)
   });
   var res = req.end();
-  console.log(req, res);
+  console.log(req, res, res.body.toString());
   return JSON.parse(res.body.toString());
 }
 
