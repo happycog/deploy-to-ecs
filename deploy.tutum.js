@@ -138,7 +138,6 @@ function apiCmd(method, uri, body)
     "body": JSON.stringify(body)
   });
   var res = req.end();
-  console.log(req, res, res.body.toString());
   return JSON.parse(res.body.toString());
 }
 
@@ -201,7 +200,7 @@ function defineStack(stackName, stack)
 
     Object.keys(container).forEach(function(containerKey) {
       if (containerKey == 'build') {
-        service.image = 'tutum.co/happycog/'+containerName;
+        service.image = 'tutum.co/happycog/'+stackName+'-'+containerName;
         return;
       }
 
