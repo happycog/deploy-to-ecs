@@ -57,7 +57,7 @@ Object.keys(json).forEach(function(containerName) {
     tagImage(stackName+'-'+containerName);
 
     console.log('Logging in...');
-    dockerLogIn(stackName+'-'+containerName);
+    dockerLogIn();
 
     console.log('Pushing '+containerName+'...');
     pushImage(stackName+'-'+containerName);
@@ -160,9 +160,9 @@ function tagImage(containerName)
   execSync(cmd);
 }
 
-function dockerLogIn(registryName)
+function dockerLogIn()
 {
-  var cmd = 'docker login -e dev@happycog.com -u happycog -p hTbuYzrov7kvv4 tutum.co/happycog/'+registryName+'/';
+  var cmd = 'docker login -e dev@happycog.com -u happycog -p hTbuYzrov7kvv4 tutum.co';
   execSync(cmd);
 }
 
