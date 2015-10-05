@@ -138,7 +138,11 @@ function apiCmd(method, uri, body)
     "body": JSON.stringify(body)
   });
   var res = req.end();
-  return JSON.parse(res.body.toString());
+  res = JSON.parse(res.body.toString());
+  if (res.error) {
+    throw new Error(res.error);
+  }
+  return res;
 }
 
 function createRegistry(registryName)
