@@ -137,7 +137,6 @@ function apiCmd(method, uri, body)
     },
     "body": JSON.stringify(body)
   });
-  console.log(req, JSON.stringify(body));
   var res = req.end();
   res = JSON.parse(res.body.toString());
   if (res.error) {
@@ -239,7 +238,6 @@ function updateStack(stackName, uuid, stack)
 {
   var def = defineStack(stackName, stack);
   delete def.name;
-  console.log(def.services);
   var res = apiCmd('PATCH', '/api/v1/stack/'+uuid+'/', def);
   return res.uuid;
 }
