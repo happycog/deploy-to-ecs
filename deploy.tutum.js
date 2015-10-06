@@ -158,25 +158,25 @@ function createRegistry(registryName)
 function buildImage(containerName, buildPath)
 {
   var cmd = 'docker build -t '+containerName+' '+buildPath;
-  // execSync(cmd);
+  execSync(cmd);
 }
 
 function tagImage(containerName)
 {
   var cmd = 'docker tag '+containerName+' tutum.co/happycog/'+containerName;
-  // execSync(cmd);
+  execSync(cmd);
 }
 
 function dockerLogIn()
 {
   var cmd = 'docker login -e dev@happycog.com -u happycog -p hTbuYzrov7kvv4 tutum.co';
-  // execSync(cmd);
+  execSync(cmd);
 }
 
 function pushImage(containerName)
 {
   var cmd = 'docker push tutum.co/happycog/'+containerName;
-  // execSync(cmd);
+  execSync(cmd);
 }
 
 function checkForStack(serviceName)
