@@ -101,7 +101,7 @@ for (var i=0; i<stack.services.length; i++) {
             var proxy = json[service.name].proxy[l].split('.');
             proxy.reverse();
             proxies['upstream.'+proxy.join('.')+':'+ports[k].inner_port] = ports[k].endpoint_uri;
-            unirest.post('https://my.slack.com/services/hooks/slackbot?token='+process.env.SLACK_TOKEN+'&channel=%23'+process.env.SLACK_CHANNEL).send("Code was just deployed to "+json[service.name].proxy[l]).end(function(response) {
+            unirest.post(process.env.SLACK_API_URL+'&channel=%23'+process.env.SLACK_CHANNEL).send("Code was just deployed to "+json[service.name].proxy[l]).end(function(response) {
               console.log(response.body);
             });
           }
