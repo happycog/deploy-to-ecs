@@ -95,10 +95,12 @@ for (var i=0; i<stack.services.length; i++) {
       var container = apiCmd('GET', service.containers[j]);
       var ports = container.container_ports;
       for (var k=0; k<ports.length; k++) {
-        for (var l=0; l< json[service.name].proxy.length; l++) {
-          var proxy = json[service.name].proxy[l].split('.');
-          proxy.reverse();
-          proxies['upstream.'+proxy.join('.')+':'+ports[k].inner_port] = ports[k].endpoint_uri;
+        if (ports[k].endpoint_uri) {
+          for (var l=0; l< json[service.name].proxy.length; l++) {
+            var proxy = json[service.name].proxy[l].split('.');
+            proxy.reverse();
+            proxies['upstream.'+proxy.join('.')+':'+ports[k].inner_port] = ports[k].endpoint_uri;
+          }
         }
       }
     }
