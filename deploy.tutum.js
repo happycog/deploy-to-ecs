@@ -102,7 +102,9 @@ for (var i=0; i<stack.services.length; i++) {
             proxy.reverse();
             proxies['upstream.'+proxy.join('.')+':'+ports[k].inner_port] = ports[k].endpoint_uri;
             if (process.env.SLACK_API_URL) {
-              unirest.post(process.env.SLACK_API_URL).send({"text":"Code was just deployed to "+json[service.name].proxy[l]}).end();
+              unirest.post(process.env.SLACK_API_URL).send({"text":"Code was just deployed to "+json[service.name].proxy[l]}).end(function(response) {
+                console.log(response.body);
+              });
             }
           }
         }
