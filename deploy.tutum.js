@@ -2,6 +2,7 @@ var fs = require('fs');
 var execSync = require('child_process').execSync;
 var yaml = require('js-yaml');
 var httpSync = require('http-sync');
+var unireset = require('unirest');
 
 var repoName = process.argv[2];
 var branchName = process.argv[3];
@@ -100,6 +101,7 @@ for (var i=0; i<stack.services.length; i++) {
             var proxy = json[service.name].proxy[l].split('.');
             proxy.reverse();
             proxies['upstream.'+proxy.join('.')+':'+ports[k].inner_port] = ports[k].endpoint_uri;
+            unirest.post('https://my.slack.com/services/hooks/slackbot?token=oLqLmTpxS5rDKghRQe5qbd9K&channel=%23int_davids_dev').send("Code was just deployed to "+json[service.name].proxy[l]).end();
           }
         }
       }
