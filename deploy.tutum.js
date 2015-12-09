@@ -2,7 +2,6 @@ var fs = require('fs');
 var execSync = require('child_process').execSync;
 var yaml = require('js-yaml');
 var httpSync = require('http-sync');
-var unirest = require('unirest');
 
 var repoName = process.argv[2];
 var branchName = process.argv[3];
@@ -102,9 +101,7 @@ for (var i=0; i<stack.services.length; i++) {
             proxy.reverse();
             proxies['upstream.'+proxy.join('.')+':'+ports[k].inner_port] = ports[k].endpoint_uri;
             if (process.env.SLACK_API_URL) {
-              unirest.post(process.env.SLACK_API_URL).type('json').send({"text":"Code was just deployed to "+json[service.name].proxy[l]}).end(function(response) {
-                // console.log(response.body);
-              });
+              runCurl('POST', {"text":"Code was just deployed to "+json[service.name].proxy[l]}, process.env.SLACK_API_URL);
             }
           }
         }
@@ -269,9 +266,18 @@ function waitForStack(uuid)
   }
 }
 
-function updateProxy(body)
+function runCurl(method, body, url)
 {
   body = JSON.stringify(body).replace(/[\\']/g, '\\$&').replace(/\u0000/g, '\\0');
-  var cmd = 'curl -s -H "Content-Type: application/json" -X POST -d \''+body+'\' http://web.cogclient-proxy.happycog.svc.tutum.io:26542/';
+  var cmd = 'curl -s -H "Content-Type: application/json" -X '+method+' -d \''+body+'\' '+url;
   return JSON.parse(execSync(cmd).toString());
+}
+
+function updateProxy(body)
+{
+  return runCurl('POST', body, 'http://web.cogclient-proxy.happycog.svc.tutum.io:26542/');
+  
+  //body = JSON.stringify(body).replace(/[\\']/g, '\\$&').replace(/\u0000/g, '\\0');
+  //var cmd = 'curl -s -H "Content-Type: application/json" -X POST -d \''+body+'\' http://web.cogclient-proxy.happycog.svc.tutum.io:26542/';
+  //return JSON.parse(execSync(cmd).toString());
 }
