@@ -270,12 +270,12 @@ function runCurl(method, body, url)
 {
   body = JSON.stringify(body).replace(/[\\']/g, '\\$&').replace(/\u0000/g, '\\0');
   var cmd = 'curl -s -H "Content-Type: application/json" -X '+method+' -d \''+body+'\' '+url;
-  return JSON.parse(execSync(cmd).toString());
+  return execSync(cmd).toString();
 }
 
 function updateProxy(body)
 {
-  return runCurl('POST', body, 'http://web.cogclient-proxy.happycog.svc.tutum.io:26542/');
+  return JSON.parse(runCurl('POST', body, 'http://web.cogclient-proxy.happycog.svc.tutum.io:26542/'));
   
   //body = JSON.stringify(body).replace(/[\\']/g, '\\$&').replace(/\u0000/g, '\\0');
   //var cmd = 'curl -s -H "Content-Type: application/json" -X POST -d \''+body+'\' http://web.cogclient-proxy.happycog.svc.tutum.io:26542/';
