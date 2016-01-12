@@ -9,7 +9,7 @@ if (!repoName || !branchName) {
   throw new Error('Repo ('+repoName+') or branch ('+branchName+') not valid.');
 }
 
-var stackName = repoName+'-'+branchName.replace('.', '-').replace('/', '-');
+var stackName = repoName+'-'+branchName.replace(/\./g, '-').replace(/\//g, '-');
 var data;
 
 try {
