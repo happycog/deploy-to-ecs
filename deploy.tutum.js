@@ -53,7 +53,7 @@ Object.keys(json).forEach(function(containerName) {
     tagImage(stackName, containerName, tagName);
 
     console.log('Pushing '+containerName+'...');
-    pushImage(stackName, containerName);
+    pushImage(stackName, containerName, tagName);
   }
 });
 
