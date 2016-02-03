@@ -87,7 +87,7 @@ for (var i=0; i<stack.services.length; i++) {
       for (var k=0; k<ports.length; k++) {
         if (ports[k].endpoint_uri) {
           for (var l=0; l< json[service.name].labels.length; l++) {
-            var proxy = json[service.name].labels[l].split('.');
+            var proxy = json[service.name].labels[l];
             if (proxy.substring(0, 9) == 'upstream.') {
               proxies[proxy+':'+ports[k].inner_port] = ports[k].endpoint_uri;
             }
