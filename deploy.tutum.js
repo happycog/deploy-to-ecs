@@ -41,6 +41,7 @@ Object.keys(json).forEach(function(containerName) {
     if (!loggedIn) {
       console.log('Logging in...');
       dockerLogIn();
+      loggedIn = true;
     }
 
     console.log('Creating '+stackName+'-'+containerName+' registry...');
