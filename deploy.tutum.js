@@ -5,9 +5,12 @@ var httpSync = require('http-sync');
 
 var repoName = process.argv[2];
 var branchName = process.argv[3];
+var tagName = process.argv[4];
 if (!repoName || !branchName) {
   throw new Error('Repo ('+repoName+') or branch ('+branchName+') not valid.');
 }
+
+tagName = tagName ? ':'+tagName : '';
 
 var stackName = repoName+'-'+branchName.replace(/\./g, '-').replace(/\//g, '-');
 var data;
@@ -47,7 +50,7 @@ Object.keys(json).forEach(function(containerName) {
     buildImage(stackName, containerName);
 
     console.log('Tagging '+containerName+'...');
-    tagImage(stackName, containerName);
+    tagImage(stackName, containerName, tagName);
 
     console.log('Pushing '+containerName+'...');
     pushImage(stackName, containerName);
@@ -137,10 +140,10 @@ function buildImage(stackName, containerName)
   execSync(cmd);
 }
 
-function tagImage(stackName, containerName)
+function tagImage(stackName, containerName, tagName)
 {
   var projectName = stackName.replace(/-/g, '');
-  var cmd = 'docker tag '+projectName+'_'+containerName+' tutum.co/happycog/'+stackName+'-'+containerName;
+  var cmd = 'docker tag '+projectName+'_'+containerName+' tutum.co/happycog/'+stackName+'-'+containerName+tagName;
   execSync(cmd);
 }
 
@@ -150,9 +153,9 @@ function dockerLogIn()
   execSync(cmd);
 }
 
-function pushImage(stackName, containerName)
+function pushImage(stackName, containerName, tagName)
 {
-  var cmd = 'docker push tutum.co/happycog/'+stackName+'-'+containerName;
+  var cmd = 'docker push tutum.co/happycog/'+stackName+'-'+containerName+tagName;
   execSync(cmd);
 }
 
