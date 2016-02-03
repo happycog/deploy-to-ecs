@@ -132,13 +132,15 @@ function createRegistry(stackName, containerName)
 
 function buildImage(stackName, containerName)
 {
+  var projectName = stackName.replace('-', '');
   var cmd = 'COMPOSE_PROJECT_NAME='+stackName+' docker-compose build '+containerName;
   execSync(cmd);
 }
 
 function tagImage(stackName, containerName)
 {
-  var cmd = 'docker tag '+stackName+'_'+containerName+' tutum.co/happycog/'+stackName+'-'+containerName;
+  var projectName = stackName.replace('-', '');
+  var cmd = 'docker tag '+projectName+'_'+containerName+' tutum.co/happycog/'+stackName+'-'+containerName;
   execSync(cmd);
 }
 
