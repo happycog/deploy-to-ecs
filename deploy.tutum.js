@@ -106,19 +106,9 @@ console.log('Done!');
 
 function apiCmd(method, uri, body)
 {
-  var req = httpSync.request({
-    "method": method,
-    "protocol": "https",
-    "host": "dashboard.tutum.co",
-    "path": uri,
-    "headers": {
-      "Authorization": "ApiKey happycog:eb031873a51f69d1da882f9e561968a2009447ed",
-      "User-Agent": "node-request",
-      "Content-Type": "application/json"
-    },
-    "body": JSON.stringify(body)
-  });
-  var res = req.end();
+  body = JSON.stringify(body).replace(/[\\']/g, '\\$&').replace(/\u0000/g, '\\0');
+  var cmd = 'curl -s -H "Authorization: ApiKey happycog:eb031873a51f69d1da882f9e561968a2009447ed" -H "User-Agent: node-request" -H "Content-Type: application/json" -X '+method+' -d \''+body+'\' https://dashboard.tutum.co'+uri;
+  var res = execSync(cmd).toString();
   res = JSON.parse(res.body.toString());
   if (res.error) {
     throw new Error(res.error);
@@ -148,7 +138,7 @@ function buildImage(stackName, containerName)
 
 function tagImage(stackName, containerName)
 {
-  var cmd = 'docker tag 'stackName+'_'+containerName+' tutum.co/happycog/'+stackName+'-'+containerName;
+  var cmd = 'docker tag '+stackName+'_'+containerName+' tutum.co/happycog/'+stackName+'-'+containerName;
   execSync(cmd);
 }
 
