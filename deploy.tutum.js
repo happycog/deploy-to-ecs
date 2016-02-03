@@ -81,7 +81,7 @@ var proxies = {};
 for (var i=0; i<stack.services.length; i++) {
   var servicePath = stack.services[i];
   var service = apiCmd('GET', servicePath);
-  if (json[service.name] && json[service.name].proxy) {
+  if (json[service.name] && json[service.name].labels) {
     for (var j=0; j<service.containers.length; j++) {
       var container = apiCmd('GET', service.containers[j]);
       console.log('  > container: '+JSON.stringify(container));
