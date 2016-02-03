@@ -13,24 +13,11 @@ var stackName = repoName+'-'+branchName.replace(/\./g, '-').replace(/\//g, '-');
 var data;
 
 try {
-  data = fs.readFileSync('tutum.yml', 'utf8');
-  console.log("Using tutum.yml");
+  data = fs.readFileSync('docker-compose.yml', 'utf8');
+  console.log("Using docker-compose.yml");
 }
 catch (e) {
 
-}
-
-//try {
-//  data = fs.readFileSync('docker-compose.yml', 'utf8');
-//  console.log("Using docker-compose.yml");
-//}
-//catch (e) {
-//
-//}
-
-if (!data) {
-  console.log("Data file not found, using defaults");
-  data = defaultConfig();
 }
 
 data = data.replace(/\${repoName}/g, repoName);
@@ -54,16 +41,16 @@ Object.keys(json).forEach(function(containerName) {
     }
 
     console.log('Creating '+stackName+'-'+containerName+' registry...');
-    createRegistry(stackName+'-'+containerName);
+    createRegistry(stackName, containerName);
 
     console.log('Building '+containerName+'...');
-    buildImage(stackName+'-'+containerName, container.build);
+    buildImage(stackName, containerName);
 
     console.log('Tagging '+containerName+'...');
-    tagImage(stackName+'-'+containerName);
+    tagImage(stackName, containerName);
 
     console.log('Pushing '+containerName+'...');
-    pushImage(stackName+'-'+containerName);
+    pushImage(stackName, containerName);
   }
 });
 
@@ -117,20 +104,6 @@ Object.keys(proxies).forEach(function(key) {
 var proxy = updateProxy(proxies);
 console.log('Done!');
 
-function defaultConfig()
-{
-  var conf = "\
-web:\n\
-  build: \".\"\n\
-  proxy:\n\
-    - ${repoName}.${branchName}.cogclient.com\n\
-  ports:\n\
-    - \"80\"\n\
-";
-
-  return conf;
-}
-
 function apiCmd(method, uri, body)
 {
   var req = httpSync.request({
@@ -153,22 +126,29 @@ function apiCmd(method, uri, body)
   return res;
 }
 
-function createRegistry(registryName)
+function runCurl(method, body, url)
+{
+  body = JSON.stringify(body).replace(/[\\']/g, '\\$&').replace(/\u0000/g, '\\0');
+  var cmd = 'curl -s -H "Content-Type: application/json" -X '+method+' -d \''+body+'\' '+url;
+  return execSync(cmd).toString();
+}
+
+function createRegistry(stackName, containerName)
 {
   apiCmd('POST', '/api/v1/image/', {
-    "name": "tutum.co/happycog/"+registryName
+    "name": "tutum.co/happycog/"+stackName+'-'+containerName
   });
 }
 
-function buildImage(containerName, buildPath)
+function buildImage(stackName, containerName)
 {
-  var cmd = 'docker build -t '+containerName+' '+buildPath;
+  var cmd = 'COMPOSE_PROJECT_NAME='+stackName+' docker-compose build '+containerName;
   execSync(cmd);
 }
 
-function tagImage(containerName)
+function tagImage(stackName, containerName)
 {
-  var cmd = 'docker tag '+containerName+' tutum.co/happycog/'+containerName;
+  var cmd = 'docker tag 'stackName+'_'+containerName+' tutum.co/happycog/'+stackName+'-'+containerName;
   execSync(cmd);
 }
 
@@ -178,15 +158,15 @@ function dockerLogIn()
   execSync(cmd);
 }
 
-function pushImage(containerName)
+function pushImage(stackName, containerName)
 {
-  var cmd = 'docker push tutum.co/happycog/'+containerName;
+  var cmd = 'docker push tutum.co/happycog/'+stackName+'-'+containerName;
   execSync(cmd);
 }
 
-function checkForStack(serviceName)
+function checkForStack(stackName)
 {
-  var res = apiCmd('GET', '/api/v1/stack/?name='+serviceName);
+  var res = apiCmd('GET', '/api/v1/stack/?name='+stackName);
   for (var i=0; i<res.objects.length; i++) {
     var stack = res.objects[i];
     if (stack.state != 'Terminated') {
@@ -213,10 +193,6 @@ function defineStack(stackName, stack)
     Object.keys(container).forEach(function(containerKey) {
       if (containerKey == 'build') {
         service.image = 'tutum.co/happycog/'+stackName+'-'+containerName;
-        return;
-      }
-
-      if (containerKey == 'proxy') {
         return;
       }
 
@@ -266,18 +242,7 @@ function waitForStack(uuid)
   }
 }
 
-function runCurl(method, body, url)
-{
-  body = JSON.stringify(body).replace(/[\\']/g, '\\$&').replace(/\u0000/g, '\\0');
-  var cmd = 'curl -s -H "Content-Type: application/json" -X '+method+' -d \''+body+'\' '+url;
-  return execSync(cmd).toString();
-}
-
 function updateProxy(body)
 {
   return JSON.parse(runCurl('POST', body, 'http://web.cogclient-proxy.happycog.svc.tutum.io:26542/'));
-  
-  //body = JSON.stringify(body).replace(/[\\']/g, '\\$&').replace(/\u0000/g, '\\0');
-  //var cmd = 'curl -s -H "Content-Type: application/json" -X POST -d \''+body+'\' http://web.cogclient-proxy.happycog.svc.tutum.io:26542/';
-  //return JSON.parse(execSync(cmd).toString());
 }
