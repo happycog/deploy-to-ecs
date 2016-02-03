@@ -192,6 +192,10 @@ function defineStack(stackName, stack)
         return;
       }
 
+      if (containerKey == 'dockerfile') {
+        return;
+      }
+
       service[containerKey] = container[containerKey];
     });
 
