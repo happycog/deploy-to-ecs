@@ -84,11 +84,13 @@ for (var i=0; i<stack.services.length; i++) {
   if (json[service.name] && json[service.name].proxy) {
     for (var j=0; j<service.containers.length; j++) {
       var container = apiCmd('GET', service.containers[j]);
+      console.log('  > container: '+JSON.stringify(container));
       var ports = container.container_ports;
       for (var k=0; k<ports.length; k++) {
         if (ports[k].endpoint_uri) {
           for (var l=0; l< json[service.name].labels.length; l++) {
             var proxy = json[service.name].labels[l];
+            console.log('  > potential proxy: '+proxy);
             if (proxy.substring(0, 9) == 'upstream.') {
               proxies[proxy+':'+ports[k].inner_port] = ports[k].endpoint_uri;
             }
