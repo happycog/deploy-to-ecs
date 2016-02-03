@@ -109,7 +109,7 @@ function apiCmd(method, uri, body)
   body = JSON.stringify(body).replace(/[\\']/g, '\\$&').replace(/\u0000/g, '\\0');
   var cmd = 'curl -s -H "Authorization: ApiKey happycog:eb031873a51f69d1da882f9e561968a2009447ed" -H "User-Agent: node-request" -H "Content-Type: application/json" -X '+method+' -d \''+body+'\' https://dashboard.tutum.co'+uri;
   var res = execSync(cmd).toString();
-  res = JSON.parse(res.body.toString());
+  res = JSON.parse(res);
   if (res.error) {
     throw new Error(res.error);
   }
