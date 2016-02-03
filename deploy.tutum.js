@@ -86,10 +86,11 @@ for (var i=0; i<stack.services.length; i++) {
       var ports = container.container_ports;
       for (var k=0; k<ports.length; k++) {
         if (ports[k].endpoint_uri) {
-          for (var l=0; l< json[service.name].proxy.length; l++) {
-            var proxy = json[service.name].proxy[l].split('.');
-            proxy.reverse();
-            proxies['upstream.'+proxy.join('.')+':'+ports[k].inner_port] = ports[k].endpoint_uri;
+          for (var l=0; l< json[service.name].labels.length; l++) {
+            var proxy = json[service.name].labels[l].split('.');
+            if (proxy.substring(0, 9) == 'upstream.') {
+              proxies[proxy+':'+ports[k].inner_port] = ports[k].endpoint_uri;
+            }
             if (process.env.SLACK_API_URL) {
               runCurl('POST', {"text":"Code was just deployed to "+json[service.name].proxy[l]}, process.env.SLACK_API_URL);
             }
