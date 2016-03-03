@@ -1,7 +1,6 @@
 var fs = require('fs');
 var execSync = require('child_process').execSync;
 var yaml = require('js-yaml');
-var httpSync = require('http-sync');
 
 var repoName = process.argv[2];
 var branchName = process.argv[3];
